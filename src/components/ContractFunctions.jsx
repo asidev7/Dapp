@@ -16,6 +16,144 @@ export default function ContractFunctions() {
   const [txStatus, setTxStatus] = useState('');
   const [txStatusType, setTxStatusType] = useState(''); // 'success', 'error', 'info'
   const [allFunctions, setAllFunctions] = useState([]);
+
+  // Pour ajouter de la liquidité
+const addLiquidity = async () => {
+  if (!contract || !account) {
+    setTxStatusType('error');
+    setTxStatus('Veuillez vous connecter à TronLink');
+    return;
+  }
+  
+  try {
+    const amount = prompt("Entrez le montant USDT à ajouter comme liquidité:");
+    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+      alert("Montant invalide");
+      return;
+    }
+    
+    // Convertir en unités USDT (6 décimales)
+    const amountInSmallestUnit = (parseFloat(amount) * Math.pow(10, 6)).toString();
+    
+    setTxStatusType('info');
+    setTxStatus('Transaction en cours...');
+    
+    // D'abord approuver le contrat à dépenser vos USDT
+    const usdtContract = await window.tronWeb.contract().at(usdtAddress);
+    await usdtContract.approve(CONTRACT_ADDRESS, amountInSmallestUnit).send();
+    
+    // Ensuite ajouter la liquidité
+    const tx = await contract.addLiquidity(amountInSmallestUnit).send();
+    
+    setTxStatusType('success');
+    setTxStatus(`Liquidité ajoutée avec succès! Hash: ${tx}`);
+  } catch (err) {
+    console.error("Erreur d'ajout de liquidité:", err);
+    setTxStatusType('error');
+    setTxStatus(`Erreur: ${err.message}`);
+  }
+};
+
+// Pour acheter des tokens
+const buyTokens = async () => {
+  if (!contract || !account) {
+    setTxStatusType('error');
+    setTxStatus('Veuillez vous connecter à TronLink');
+    return;
+  }
+  
+  try {
+    const amount = prompt("Entrez le montant USDT à dépenser pour acheter des tokens:");
+    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+      alert("Montant invalide");
+      return;
+    }
+    
+    // Convertir en unités USDT (6 décimales)
+    const amountInSmallestUnit = (parseFloat(amount) * Math.pow(10, 6)).toString();
+    
+    setTxStatusType('info');
+    setTxStatus('Transaction en cours...');
+    
+    // D'abord approuver le contrat à dépenser vos USDT
+    const usdtContract = await window.tronWeb.contract().at(usdtAddress);
+    await usdtContract.approve(CONTRACT_ADDRESS, amountInSmallestUnit).send();
+    
+    // Ensuite acheter les tokens
+    const tx = await contract.buyTokens(amountInSmallestUnit).send();
+    
+    setTxStatusType('success');
+    setTxStatus(`Tokens achetés avec succès! Hash: ${tx}`);
+    
+    // Mettre à jour le solde
+    const balance = await contract.balanceOf(account).call();
+    setUserBalance(balance.toString() / Math.pow(10, contractDecimals));
+  } catch (err) {
+    console.error("Erreur d'achat de tokens:", err);
+    setTxStatusType('error');
+    setTxStatus(`Erreur: ${err.message}`);
+  }
+};
+
+// Pour vendre des tokens
+const sellTokens = async () => {
+  if (!contract || !account) {
+    setTxStatusType('error');
+    setTxStatus('Veuillez vous connecter à TronLink');
+    return;
+  }
+  
+  try {
+    const amount = prompt("Entrez le montant de tokens à vendre:");
+    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+      alert("Montant invalide");
+      return;
+    }
+    
+    // Convertir en unités du token avec les décimales
+    const amountInSmallestUnit = (parseFloat(amount) * Math.pow(10, contractDecimals)).toString();
+    
+    setTxStatusType('info');
+    setTxStatus('Transaction en cours...');
+    
+    // Vendre les tokens
+    const tx = await contract.sellTokens(amountInSmallestUnit).send();
+    
+    setTxStatusType('success');
+    setTxStatus(`Tokens vendus avec succès! Hash: ${tx}`);
+    
+    // Mettre à jour le solde
+    const balance = await contract.balanceOf(account).call();
+    setUserBalance(balance.toString() / Math.pow(10, contractDecimals));
+  } catch (err) {
+    console.error("Erreur de vente de tokens:", err);
+    setTxStatusType('error');
+    setTxStatus(`Erreur: ${err.message}`);
+  }
+};
+
+// Pour lancer le token (démarrer le compteur d'expiration)
+const launchToken = async () => {
+  if (!contract || !account) {
+    setTxStatusType('error');
+    setTxStatus('Veuillez vous connecter à TronLink');
+    return;
+  }
+  
+  try {
+    setTxStatusType('info');
+    setTxStatus('Transaction en cours...');
+    
+    const tx = await contract.launch().send();
+    
+    setTxStatusType('success');
+    setTxStatus(`Token lancé avec succès! Hash: ${tx}`);
+  } catch (err) {
+    console.error("Erreur de lancement du token:", err);
+    setTxStatusType('error');
+    setTxStatus(`Erreur: ${err.message}`);
+  }
+};
   
   // États pour le menu mobile
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
